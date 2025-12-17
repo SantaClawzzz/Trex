@@ -1,5 +1,5 @@
 #include <Adafruit_GFX.h>
-#include "WROVER_KIT_LCD.h"
+#include <Adafruit_ILI9341.h>
 #include <DinoGame.h>
 
 //#define USE_NOINTERNET
@@ -8,10 +8,15 @@
 #include "no_internet.h"
 #endif
 
-WROVER_KIT_LCD tft;
+// RP2040 ILI9341 pins
+#define TFT_CS 17
+#define TFT_DC 20
+#define TFT_RST 21
+
+Adafruit_ILI9341 tft(TFT_CS, TFT_DC, TFT_RST);
 DinoGame game(tft);
 
-void setup(void) {
+void setup() {
   Serial.begin(115200);
   tft.begin();
   tft.setRotation(1);
@@ -19,7 +24,7 @@ void setup(void) {
   pinMode(13, INPUT_PULLUP);
   pinMode(12, INPUT_PULLUP);
   #ifdef USE_NOINTERNET
-  tft.drawBitmap(0, 131, 320, 109, no_internet);
+  tft.drawBitmap(0, 70, 320, 82, no_internet);
   #endif
 }
 
@@ -35,7 +40,7 @@ void loop() {
     if(!digitalRead(13)){
       game.newGame();
       #ifdef USE_NOINTERNET
-      tft.drawBitmap(0, 131, 320, 109, no_internet);
+      tft.drawBitmap(0, 70, 320, 82, no_internet);
       #endif   
       break;
     }

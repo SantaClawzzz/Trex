@@ -1,6 +1,10 @@
 #include "DinoGame.h"
+#include <Adafruit_ILI9341.h>
 
-DinoGame::DinoGame(WROVER_KIT_LCD &display): display(display){}
+#define WROVER_WHITE 0xFFFF
+#define SCREEN_WIDTH 320
+
+DinoGame::DinoGame(Adafruit_ILI9341 &display): display(display){}
 
 void DinoGame::loop(){
     if(colided){
@@ -61,7 +65,7 @@ void DinoGame::manageBird(){
         bird_info.x_offset -= 2 + speed_modifier;
         if (bird_info.x_offset < -34){ //When the bird sprite isn't drawn anymore (the spirtes width is 34px) we remove it from the game
           bird_info.inGame = false;
-          bird_info.x_offset = 320;
+          bird_info.x_offset = SCREEN_WIDTH;
         }
     }
 }
@@ -113,7 +117,7 @@ void DinoGame::newGame(){
   ducking = false;
   displayedGameOver = false;
   bird_info.inGame = false;
-  bird_info.x_offset = 320;
+  bird_info.x_offset = SCREEN_WIDTH;
   jumping = false;
   falling = false;
   jumpHeigth = 0;
@@ -144,7 +148,7 @@ void DinoGame::endGame(){
   display.setTextColor(0x738E, 0);
   display.setCursor(110, 70);
   display.print("GAME OVER");
-  display.drawBitmap(148, 80, 32, 29, retry);
+  display.drawRGBBitmap(148, 80, retry, 32, 29);
   
 }
 
@@ -209,9 +213,9 @@ String DinoGame::scoreToString(uint32_t score){
 void DinoGame::shiftArrays(uint16_t buff[], const uint16_t arr1[], const uint16_t arr2[], const uint16_t arr3[], 
                                         const uint16_t arr4[], const uint16_t arr5[], const uint16_t shiftValue){
     memset(buff, 0xFF, 9600); //This is the part the bird flies in when it's in the top position
-    uint16_t count = 4800, line = 0; //4800 (=320*15) offsets the starting drawing position 15 lines downward (also the offset from the part the bird flies in)
+    uint16_t count = 4800, line = 0; //5100 (=340*15) offsets the starting drawing position 15 lines downward (also the offset from the part the bird flies in)
     while (line < 38) {
-    for (uint16_t i = 0; i < 320; ++i) {
+    for (uint16_t i = 0; i < SCREEN_WIDTH; ++i) {
         if (i < 91 - shiftValue) buff[count] = arr1[i + shiftValue + line * 90]; //shiftValue offsets the starting x position of the sprite array
         else if (i > 90 - shiftValue && i < 181 - shiftValue) buff[count] = arr2[(i - 90  + shiftValue) + line * 90];
         else if (i > 180 - shiftValue && i < 271 - shiftValue) buff[count] = arr3[(i - 180  + shiftValue) + line * 90];
@@ -224,8 +228,8 @@ void DinoGame::shiftArrays(uint16_t buff[], const uint16_t arr1[], const uint16_
     line = 0;
     while (line < 38) {
         count = 0;
-        for (uint16_t i = 320 - (shiftValue - 40); i < 320; ++i) {
-            buff[(line + 15) * 320 + i] = arr5[count + line * 90];
+        for (uint16_t i = SCREEN_WIDTH - (shiftValue - 40); i < SCREEN_WIDTH; ++i) {
+            buff[(line + 15) * SCREEN_WIDTH + i] = arr5[count + line * 90];
             ++count;
         }
         ++line;
@@ -245,8 +249,8 @@ void DinoGame::overlapDino(uint16_t gameBuff[], uint16_t dinoBuff[], const uint1
         for (uint16_t i = 0; i < w; ++i) {
         if (height > h && style == walk_style::walking) dinoBuff[(95 - height) * 34 + i] = dinoModel[modelLine * w + i]; //For the parts of dino that are in the top layer we dont perform transparency and collision checks
         else {
-            uint16_t* const destination = &gameBuff[(h - height) * 320 + i + 15];
-            uint16_t color = dinoModel[modelLine * w + i];
+            uint16_t* const destination = &gameBuff[(h - height) * SCREEN_WIDTH + i + 15];
+            uint16_t color = pgm_read_word(&(dinoModel[modelLine * w + i]));
             if ((h - height) < checkline && *destination == 0x528A && color == 0x528A) colided = true; //Colision is checked before the line 15
             if (color != 0xFFFF) *destination = color; //0xFFFF is the "transparent" color in this game
             }
@@ -258,11 +262,11 @@ void DinoGame::overlapDino(uint16_t gameBuff[], uint16_t dinoBuff[], const uint1
 
 void DinoGame::overlapBird(uint16_t gameBuff[], const uint16_t modelBuff[], int16_t offset, bird_position position){
     uint16_t line = 0, line_offset = position == bird_position::up ? 1 : 18; //y offset
-    int16_t start = offset < 0 ? -offset : 0, end = offset > 286 ? 320 - offset : 34; //Starting and ending x coordinates for drawing the bird depending on where on the screen it is positioned
+    int16_t start = offset < 0 ? -offset : 0, end = offset > 286 ? SCREEN_WIDTH - offset : 34; //Starting and ending x coordinates for drawing the bird depending on where on the screen it is positioned
     while (line < 27) {
         for (int16_t i = start; i < end; ++i) {
             uint16_t color = modelBuff[i + line * 34];
-            if (color != 0xFFFF) gameBuff[offset + i + (line + line_offset) * 320] = color;
+            if (color != 0xFFFF) gameBuff[offset + i + (line + line_offset) * SCREEN_WIDTH] = color;
         }
         ++line;
     }
@@ -289,7 +293,7 @@ unsigned long DinoGame::getSteps(){
 }
 
 void DinoGame::draw(){
-    display.drawBitmap(0, 78, 320, 53, arr);
-    display.drawBitmap(15, 19, 34, 59, topJumpingLayer);
+    display.drawRGBBitmap(0, 78, arr, SCREEN_WIDTH, 53);
+    display.drawRGBBitmap(15, 19, topJumpingLayer, 34, 59);
     drawScore();
 }
