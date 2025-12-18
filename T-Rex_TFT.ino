@@ -37,7 +37,7 @@ void loop() {
     else game.stand();  
   }
   while(game.isGameOver()){
-    if(!digitalRead(13)){
+    if(!digitalRead(13) || !digitalRead(12)){
       game.newGame();
       #ifdef USE_NOINTERNET
       tft.drawBitmap(0, 70, 320, 82, no_internet);
