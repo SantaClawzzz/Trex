@@ -1,6 +1,6 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
-#include <DinoGame.h>
+#include "DinoGame.h"
 
 //#define USE_NOINTERNET
 
